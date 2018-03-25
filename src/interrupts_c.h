@@ -4,6 +4,27 @@
 #include "global.h"
 
 // C-language hardware interrupt method signatures.
+// Different chips have different NVIC definitions,
+// so we should define each line's functionality in
+// its own method which is common across chips.
+// TODO: Should these be declared as explicitly inline?
+void EXTI0_line_interrupt(void);
+void EXTI1_line_interrupt(void);
+void EXTI2_line_interrupt(void);
+void EXTI3_line_interrupt(void);
+void EXTI4_line_interrupt(void);
+void EXTI5_line_interrupt(void);
+void EXTI6_line_interrupt(void);
+void EXTI7_line_interrupt(void);
+void EXTI8_line_interrupt(void);
+void EXTI9_line_interrupt(void);
+void EXTI10_line_interrupt(void);
+void EXTI11_line_interrupt(void);
+void EXTI12_line_interrupt(void);
+void EXTI13_line_interrupt(void);
+void EXTI14_line_interrupt(void);
+void EXTI15_line_interrupt(void);
+
 #ifdef VVC_F0
 // STM32F0xx EXTI lines.
 // EXTI handler for interrupt lines 0-1.
