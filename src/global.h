@@ -48,6 +48,8 @@ volatile int menu_state;
 volatile int last_top_row;
 volatile unsigned char draw_color;
 volatile uint16_t last_adc_value;
+#define ADC_MIC_SAMPLES 92
+volatile uint16_t adc_buffer[ADC_MIC_SAMPLES];
 
 // Global ADC initialization struct.
 LL_ADC_InitTypeDef  adc_init_struct;

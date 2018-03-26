@@ -20,5 +20,6 @@ void oled_draw_text(int x, int y, char* cc, unsigned char color, char size);
 
 // Firmware support methods.
 void draw_test_menu();
+void draw_mic_readout();
 
 #endif

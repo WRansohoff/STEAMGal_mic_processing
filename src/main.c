@@ -14,6 +14,11 @@ int main(void) {
   last_top_row = TEST_MENU_LED_TOGGLE;
   draw_color = 0;
   last_adc_value = 0;
+  // Reset the ADC buffer to 0s.
+  volatile uint16_t adc_iter = 0;
+  for (adc_iter = 0; adc_iter < ADC_MIC_SAMPLES; ++adc_iter) {
+    adc_buffer[adc_iter] = 0;
+  }
 
   // Enable the GPIOA clock (buttons on pins A2-A7,
   // user LED on pin A12).
@@ -142,7 +147,7 @@ int main(void) {
     // Set the ADC group regular sequencer.
     LL_ADC_REG_SetSequencerRanks(ADC1, LL_ADC_REG_RANK_1, LL_ADC_CHANNEL_2);
     // Set the ADC channel sampling time.
-    LL_ADC_SetChannelSamplingTime(ADC1, LL_ADC_CHANNEL_2, LL_ADC_SAMPLINGTIME_181CYCLES_5);
+    LL_ADC_SetChannelSamplingTime(ADC1, LL_ADC_CHANNEL_2, LL_ADC_SAMPLINGTIME_19CYCLES_5);
     // Enable the ADC.
     LL_ADC_Enable(ADC1);
   #endif
@@ -204,7 +209,8 @@ int main(void) {
   #endif
 
   while (1) {
-    draw_test_menu();
+    //draw_test_menu();
+    draw_mic_readout();
     // Communicate the framebuffer to the OLED screen.
     i2c_display_framebuffer(I2C1_BASE, &oled_fb);
 
@@ -214,6 +220,12 @@ int main(void) {
     while (LL_ADC_REG_IsConversionOngoing(ADC1)) {}
     // Read the converted value.
     last_adc_value = LL_ADC_REG_ReadConversionData12(ADC1);
+    // Shift it into the ADC buffer.
+    // TODO: Use a better data structure for a stack/queue.
+    for (adc_iter = ADC_MIC_SAMPLES; adc_iter > 0; --adc_iter) {
+      adc_buffer[adc_iter] = adc_buffer[adc_iter - 1];
+    }
+    adc_buffer[0] = last_adc_value;
 
     // Set the onboard LED.
     if (uled_state) {

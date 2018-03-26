@@ -580,3 +580,33 @@ void draw_test_menu() {
   snprintf(oled_line_buf, 23, "%s", "Cyc\0");
   oled_draw_text(100, 46, oled_line_buf, !draw_color, 'S');
 }
+
+void draw_mic_readout() {
+  // Clear the screen.
+  oled_draw_rect(0, 0, 128, 64, 0, 0);
+  // Draw simple 'graph axes'.
+  oled_draw_h_line(14, 56, 92, 1);
+  oled_draw_v_line(14, 4, 52, 1);
+  // Draw collected data points.
+  uint16_t i = 0;
+  int16_t cur_val = 0;
+  int16_t last_val = -1;
+  for (i = 0; i < ADC_MIC_SAMPLES; ++i) {
+    // Value is in range of ~[0:4096], and we have ~50 pixels.
+    // Plus, use a small 4-5px vertical offset.
+    cur_val = 55 - (adc_buffer[i] / 82);
+    if (last_val == -1 || (cur_val == last_val)) {
+      oled_write_pixel(15 + i, cur_val, 1);
+    }
+    else {
+      // Instead of a pixel, draw a vertical line to link.
+      if (cur_val > last_val) {
+        oled_draw_v_line(15 + i, last_val, (cur_val - last_val), 1);
+      }
+      else {
+        oled_draw_v_line(15 + i, cur_val, (last_val - cur_val), 1);
+      }
+    }
+    last_val = cur_val;
+  }
+}
