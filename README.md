@@ -8,9 +8,9 @@ The files under 'lib/' are probably not necessary, I just keep having GCC get co
 
 # Current Status
 
-Currently, the only functionality is reading an analog channel on pin A1 to a variable every loop; sampling is not done on a consistent schedule, nor is it processed by an FFT, nor is the value displayed anywhere.
+ADC input is read on pin A1 at ~25Hz and drawn to the OLED screen in a 92-data-point time-domain graph.
 
-So, basically nothing.
+No further processing is done, but the timer interrupts seem to be able to read and insert 12-bit ADC values with ~20-cycle reads as fast as 48KHz, so it seems like it should be possible to sample audio. And that's with a 48MHz PLL, I still haven't changed the code to bring the F3 cores up to their full speed of 72MHz.
 
 # Connections
 
