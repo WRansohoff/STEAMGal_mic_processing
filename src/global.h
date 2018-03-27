@@ -17,11 +17,13 @@
   #include "stm32f0xx_ll_exti.h"
   #include "stm32f0xx_ll_gpio.h"
   #include "stm32f0xx_ll_system.h"
+  #include "stm32f0xx_ll_tim.h"
 #elif VVC_F3
   #include "stm32f3xx_ll_adc.h"
   #include "stm32f3xx_ll_exti.h"
   #include "stm32f3xx_ll_gpio.h"
   #include "stm32f3xx_ll_system.h"
+  #include "stm32f3xx_ll_tim.h"
 #endif
 
 // Assembly methods.
@@ -50,11 +52,14 @@ volatile unsigned char draw_color;
 volatile uint16_t last_adc_value;
 #define ADC_MIC_SAMPLES 92
 volatile uint16_t adc_buffer[ADC_MIC_SAMPLES];
+volatile uint16_t adc_buf_pos;
 
 // Global ADC initialization struct.
 LL_ADC_InitTypeDef  adc_init_struct;
 // Global EXTI initialization struct.
 LL_EXTI_InitTypeDef exti_init_struct;
+// Global TIM (timer) initialization struct.
+LL_TIM_InitTypeDef  timer_init_struct;
 
 // Buffer for the OLED screen.
 // Currently only supports 128x64-px monochrome.

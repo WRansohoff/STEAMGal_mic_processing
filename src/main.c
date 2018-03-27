@@ -15,7 +15,8 @@ int main(void) {
   draw_color = 0;
   last_adc_value = 0;
   // Reset the ADC buffer to 0s.
-  volatile uint16_t adc_iter = 0;
+  adc_buf_pos = 0;
+  uint16_t adc_iter = 0;
   for (adc_iter = 0; adc_iter < ADC_MIC_SAMPLES; ++adc_iter) {
     adc_buffer[adc_iter] = 0;
   }
@@ -28,12 +29,16 @@ int main(void) {
   RCC->AHBENR |= RCC_AHBENR_GPIOBEN;
   // Enable the I2C1 clock.
   RCC->APB1ENR |= RCC_APB1ENR_I2C1EN;
+  // Enable the TIM2 clock.
+  RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
   // Enable the SYSCFG clock for hardware interrupts.
   RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
   // Enable the ADC1 clock for Analog/Digital Conversion.
   #ifdef VVC_F0
+    // Enable ADC1 clock.
     RCC->APB2ENR |= RCC_APB2ENR_ADC1EN;
   #elif VVC_F3
+    // Enable clocks for the ADCs.
     RCC->AHBENR  |= RCC_AHBENR_ADC12EN;
   #endif
 
@@ -208,24 +213,57 @@ int main(void) {
     NVIC_EnableIRQ(EXTI9_5_IRQn);
   #endif
 
+  // De-initialize the TIM2 timer peripheral, and then
+  // re-initialize it for periodically reading from the ADC.
+  // (Use TIM2 beacuse it is simple & available on most chips.)
+  // TODO: Should I start breaking out functions for
+  // peripheral startup?
+  #ifdef VVC_F0
+    // First, ensure the timer is off.
+    LL_TIM_DeInit(TIM2);
+    // (TODO)
+  #elif  VVC_F3
+    // First, ensure the timer is off.
+    LL_TIM_DeInit(TIM2);
+    // For now, set a prescaler value of 1024 = 0x400.
+    // If the PLL is 48MHz, this should be 46.875KHz.
+    // (TODO: up the clock to 72MHz and standardize)
+    timer_init_struct.Prescaler = 0x0400;
+    // Set the timer to count upwards.
+    timer_init_struct.CounterMode = LL_TIM_COUNTERMODE_UP;
+    // Set an auto-reload value of the timer 'period'.
+    // So...I think that means that to tick every second,
+    // we should set an auto-reload of...46875? = 0xB71B
+    // (But hex is not human-readable.)
+    //timer_init_struct.Autoreload = 46875;
+    // Okay, with the interrupt working we don't want
+    // every second to blink an LED. We want ~CD quality audio.
+    // (This is way too fast to visualize on the OLED.
+    //  But that's promising for future FFT'ing!)
+    //timer_init_struct.Autoreload = 1;
+    // (2048 seems like a good value to draw a time-domain graph)
+    timer_init_struct.Autoreload = 2048;
+    // Set clock division to trigger on every event.
+    timer_init_struct.ClockDivision = LL_TIM_CLOCKDIVISION_DIV1;
+    // Set the repetition counter to 0; unused.
+    timer_init_struct.RepetitionCounter = 0x00;
+    // Initialize the peripheral.
+    LL_TIM_Init(TIM2, &timer_init_struct);
+    // Next, enable the 'Update' timer interrupt.
+    LL_TIM_EnableIT_UPDATE(TIM2);
+    // ...And do the same for the timer's NVIC channel.
+    // (Use the same interrupt priorities as an EXTI line for now)
+    NVIC_SetPriority(TIM2_IRQn, exti_pri_encoding);
+    NVIC_EnableIRQ(TIM2_IRQn);
+    // Then finally, enable the timer.
+    LL_TIM_EnableCounter(TIM2);
+  #endif
+
   while (1) {
     //draw_test_menu();
     draw_mic_readout();
     // Communicate the framebuffer to the OLED screen.
     i2c_display_framebuffer(I2C1_BASE, &oled_fb);
-
-    // Read the given ADC channel.
-    LL_ADC_REG_StartConversion(ADC1);
-    // Wait for the conversion to finish.
-    while (LL_ADC_REG_IsConversionOngoing(ADC1)) {}
-    // Read the converted value.
-    last_adc_value = LL_ADC_REG_ReadConversionData12(ADC1);
-    // Shift it into the ADC buffer.
-    // TODO: Use a better data structure for a stack/queue.
-    for (adc_iter = ADC_MIC_SAMPLES; adc_iter > 0; --adc_iter) {
-      adc_buffer[adc_iter] = adc_buffer[adc_iter - 1];
-    }
-    adc_buffer[0] = last_adc_value;
 
     // Set the onboard LED.
     if (uled_state) {

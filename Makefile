@@ -100,12 +100,14 @@ ifeq ($(MCU_CLASS), F0)
 	C_SRC  += ./src/hal_libs_f0/stm32f0xx_ll_adc.c
 	C_SRC  += ./src/hal_libs_f0/stm32f0xx_ll_exti.c
 	C_SRC  += ./src/hal_libs_f0/stm32f0xx_ll_gpio.c
+	C_SRC  += ./src/hal_libs_f0/stm32f0xx_ll_tim.c
 else ifeq ($(MCU_CLASS), L0)
 	# TODO
 else ifeq ($(MCU_CLASS), F3)
 	C_SRC  += ./src/hal_libs_f3/stm32f3xx_ll_adc.c
 	C_SRC  += ./src/hal_libs_f3/stm32f3xx_ll_exti.c
 	C_SRC  += ./src/hal_libs_f3/stm32f3xx_ll_gpio.c
+	C_SRC  += ./src/hal_libs_f3/stm32f3xx_ll_tim.c
 endif
 
 # (other header file directories, if any)

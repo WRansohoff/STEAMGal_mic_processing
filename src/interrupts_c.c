@@ -231,3 +231,23 @@ return;
 }
 
 #endif
+
+// Interrupts common to all supported chips.
+void TIM2_IRQ_handler(void) {
+  if (LL_TIM_IsActiveFlag_UPDATE(TIM2)) {
+    LL_TIM_ClearFlag_UPDATE(TIM2);
+    // Read the given ADC channel.
+    LL_ADC_REG_StartConversion(ADC1);
+    // Wait for the conversion to finish.
+    while (LL_ADC_REG_IsConversionOngoing(ADC1)) {}
+    // Read the converted value.
+    last_adc_value = LL_ADC_REG_ReadConversionData12(ADC1);
+    // Shift it into the ADC buffer.
+    adc_buffer[adc_buf_pos] = last_adc_value;
+    adc_buf_pos++;
+    if (adc_buf_pos >= ADC_MIC_SAMPLES) {
+      adc_buf_pos = 0;
+    }
+  }
+  return;
+}

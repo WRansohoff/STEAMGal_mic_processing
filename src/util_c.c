@@ -588,23 +588,51 @@ void draw_mic_readout() {
   oled_draw_h_line(14, 56, 92, 1);
   oled_draw_v_line(14, 4, 52, 1);
   // Draw collected data points.
-  uint16_t i = 0;
+  int16_t i = 0;
   int16_t cur_val = 0;
   int16_t last_val = -1;
-  for (i = 0; i < ADC_MIC_SAMPLES; ++i) {
+  uint16_t draw_x = 0;
+  uint16_t draw_pos = adc_buf_pos;
+  uint16_t cur_px = 0;
+  // First, draw from the buffer position down to index 0...
+  for (i = draw_pos; i >= 0; --i) {
     // Value is in range of ~[0:4096], and we have ~50 pixels.
     // Plus, use a small 4-5px vertical offset.
     cur_val = 55 - (adc_buffer[i] / 82);
+    cur_px++;
+    draw_x = 15 + cur_px;
     if (last_val == -1 || (cur_val == last_val)) {
-      oled_write_pixel(15 + i, cur_val, 1);
+      oled_write_pixel(draw_x, cur_val, 1);
     }
     else {
       // Instead of a pixel, draw a vertical line to link.
       if (cur_val > last_val) {
-        oled_draw_v_line(15 + i, last_val, (cur_val - last_val), 1);
+        oled_draw_v_line(draw_x, last_val, (cur_val - last_val), 1);
       }
       else {
-        oled_draw_v_line(15 + i, cur_val, (last_val - cur_val), 1);
+        oled_draw_v_line(draw_x, cur_val, (last_val - cur_val), 1);
+      }
+    }
+    last_val = cur_val;
+  }
+  // ...Then from array's end to the buffer position.
+  for (i = (ADC_MIC_SAMPLES-1); i > draw_pos; --i) {
+    // TODO: Duplicate code (mostly)
+    // Value is in range of ~[0:4096], and we have ~50 pixels.
+    // Plus, use a small 4-5px vertical offset.
+    cur_val = 55 - (adc_buffer[i] / 82);
+    cur_px++;
+    draw_x = 15 + cur_px;
+    if (last_val == -1 || (cur_val == last_val)) {
+      oled_write_pixel(draw_x, cur_val, 1);
+    }
+    else {
+      // Instead of a pixel, draw a vertical line to link.
+      if (cur_val > last_val) {
+        oled_draw_v_line(draw_x, last_val, (cur_val - last_val), 1);
+      }
+      else {
+        oled_draw_v_line(draw_x, cur_val, (last_val - cur_val), 1);
       }
     }
     last_val = cur_val;

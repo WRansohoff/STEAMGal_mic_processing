@@ -51,4 +51,7 @@ void EXTI5_9_IRQ_handler(void);
 // (Unused)
 #endif
 
+// Handlers common to all supported lines of chip.
+void TIM2_IRQ_handler(void);
+
 #endif
